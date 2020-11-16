@@ -1,11 +1,9 @@
 package ScapegoatTree;
 
-import com.sun.source.tree.Tree;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Objects.*;
 
 public class TreeNode<T extends Comparable> {
     private T value;
