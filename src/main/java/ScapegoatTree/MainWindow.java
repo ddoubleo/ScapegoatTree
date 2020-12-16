@@ -153,8 +153,7 @@ public class MainWindow extends JPanel implements ActionListener {
     }
 
     public static void main(String[] args) {
-        ScapegoatTree tree = new ScapegoatTree(0, 0.5);
-        tree.remove(0);
+        ScapegoatTree tree = new ScapegoatTree(0.5);
         Random rand = new Random();
         for (int i = 0; i < 25; i++) tree.add(rand.nextInt(250));
         JFrame f = new JFrame("Scapegoat Tree");
