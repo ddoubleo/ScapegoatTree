@@ -159,7 +159,7 @@ public class MainWindow extends JPanel implements ActionListener {
         for (int i = 0; i < 25; i++) tree.add(rand.nextInt(250));
         JFrame f = new JFrame("Scapegoat Tree");
         JOptionPane.showMessageDialog(frame, "Welcome," +
-                "the interface is quite dumb: press the button for the required operation:" +
+                "the best i could come up with: press the button for the required operation:" +
                 "\n a  Add an integer number" +
                 "\n s  Search an integer number" +
                 "\n r  Remove an integer number");
