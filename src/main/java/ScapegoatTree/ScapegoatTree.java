@@ -1,45 +1,39 @@
 package ScapegoatTree;
 
 
+
 import java.util.*;
 
-public class ScapegoatTree<T extends Comparable> implements Set {
+public class ScapegoatTree<T extends Comparable<T>> implements Set{
     private TreeNode<T> root;
-    private double alpha; // Коэффицент балансировки 0.5 < alpha < 1
+    private double alpha; //balance coefficient
     private int size;
-    private Class elementClass;
-    private int lastRerbuildSize;
+    private Class classOfT;
+    private int lastRebuildSize;
+
+    //constructor and getter for root
 
     public ScapegoatTree(T value, double alpha) {
         if (alpha >= 0.5 && alpha < 1) this.alpha = alpha;
-        else throw new IllegalArgumentException("alpha value should be in range [0.5,1). Current alpha" + alpha);
-        this.root = new TreeNode<T>(value);
+        else throw new IllegalArgumentException("alpha should be in [0.5 ; 1) range. Current alpha: " + alpha);
+        this.root = new TreeNode<>(value);
         size = 1;
-        elementClass = value.getClass();
-        lastRerbuildSize = 1;
+        classOfT = value.getClass();
+        lastRebuildSize = 1;
     }
 
     public ScapegoatTree(double alpha) {
         if (alpha >= 0.5 && alpha < 1) this.alpha = alpha;
-        else throw new IllegalArgumentException("alpha value should be in range [0.5,1). Current alpha" + alpha);
+        else throw new IllegalArgumentException("alpha should be in [0.5 ; 1) range. Current alpha: " + alpha);
         this.root = null;
         size = 0;
-        elementClass = null;
-        lastRerbuildSize = 0;
+        classOfT = null;
+        lastRebuildSize = 0;
     }
 
-    public TreeNode<T> getRoot() {
-        return root;
-    }
+    public TreeNode<T> getRoot() { return root; }
 
-    public int size() {
-        return size;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return root == null;
-    }
+    public int size() { return size; }
 
     @Override
     public boolean equals(Object o) {
@@ -49,26 +43,27 @@ public class ScapegoatTree<T extends Comparable> implements Set {
         return Double.compare(that.alpha, alpha) == 0 &&
                 size == that.size &&
                 Objects.equals(root, that.root) &&
-                Objects.equals(elementClass, that.elementClass);
+                Objects.equals(classOfT, that.classOfT);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(root, size, elementClass);
-    }
+    public int hashCode() { return Objects.hash(root, size, classOfT); }
+
+    @Override
+    public boolean isEmpty() { return root == null; }
 
     @Override
     public boolean contains(Object o) {
         if (o == null || root == null) return false;
-        if (!elementClass.equals(o.getClass())) return false;
+        if (!classOfT.equals(o.getClass())) return false;
         T searchValue = (T) o;
         return root.search(searchValue) != null;
     }
 
-    public class ScapegoatTreeIterator implements Iterator {
-        Deque<TreeNode> queue;
+    public class ScapegoatTreeIterator implements Iterator<T> {
+        Deque<TreeNode<T>> queue;
 
-        public ScapegoatTreeIterator(TreeNode root) {
+        public ScapegoatTreeIterator(TreeNode<T> root) {
             queue = new ArrayDeque<>();
             while (root != null) {
                 queue.addLast(root);
@@ -95,10 +90,11 @@ public class ScapegoatTree<T extends Comparable> implements Set {
     }
 
     @Override
-    public Iterator iterator() {
+    public Iterator<T> iterator() {
         return new ScapegoatTreeIterator(root);
     }
 
+    @Override
     public Object[] toArray() {
         ArrayList<T> values = new ArrayList<>();
         root.getSubtreeAsList(true, values);
@@ -108,8 +104,8 @@ public class ScapegoatTree<T extends Comparable> implements Set {
     @Override
     public boolean add(Object o) {
         if (o == null) return false;
-        if (elementClass == null) elementClass = o.getClass();
-        if (!elementClass.equals(o.getClass())) return false;
+        if (classOfT == null) classOfT = o.getClass();
+        if (!classOfT.equals(o.getClass())) return false;
         if (this.contains(o)) return false;
         T addValue = (T) o;
         if (root == null) {
@@ -126,11 +122,10 @@ public class ScapegoatTree<T extends Comparable> implements Set {
             double leftWeight = 0.0;
             if (node.getRightChild() != null) rightWeight = node.getRightChild().getWeight();
             if (node.getLeftChild() != null) leftWeight = node.getLeftChild().getWeight();
-            if (rightWeight > leftWeight || leftWeight > currAlpWeight) {
-                rebuild(true, node, path);
+            if (rightWeight > currAlpWeight || leftWeight > currAlpWeight){
+                rebuild(true, node, path); //Scapegoat found - balance time!
                 break;
             }
-
         }
         return true;
     }
@@ -138,8 +133,8 @@ public class ScapegoatTree<T extends Comparable> implements Set {
     @Override
     public boolean remove(Object o) {
         if (o == null) return false;
-        if (elementClass == null) return false;
-        if (!elementClass.equals(o.getClass())) return false;
+        if (classOfT == null) return false;
+        if (!classOfT.equals(o.getClass())) return false;
         if (!this.contains(o)) return false;
         T removeValue = (T) o;
 
@@ -154,42 +149,39 @@ public class ScapegoatTree<T extends Comparable> implements Set {
         rebuild(false, removingNode, path);
         size--;
 
-        if (size * alpha < lastRerbuildSize) {
-            rebuild(true, root, new ArrayDeque<TreeNode<T>>() {{
-                add(root);
-            }});
-            lastRerbuildSize = size;
+        if (size * alpha < lastRebuildSize) {
+            rebuild(true, root, new ArrayDeque<TreeNode<T>>(){{add(root);}});
+            lastRebuildSize = size;
         }
+
         return true;
     }
 
-
     @Override
     public boolean addAll(Collection c) {
-        boolean isSuccesful = true;
-        for (Object element : c) isSuccesful = this.remove(element);
-        return isSuccesful;
+        boolean isSuccessful = true;
+        for (Object element : c) isSuccessful = this.add(element);
+        return isSuccessful;
     }
 
     @Override
-    public void clear() {
-        root = null;
-    }
+    public void clear() { root = null; }
 
     @Override
     public boolean removeAll(Collection c) {
-        boolean isSuccesful = true;
-        for (Object element : c) isSuccesful = this.remove(element);
-        return isSuccesful;
+        boolean isSuccessful = true;
+        for (Object element : c) isSuccessful = this.remove(element);
+        return isSuccessful;
     }
 
     @Override
     public boolean retainAll(Collection c) {
-        boolean isSuccesful = true;
-        for (Object element : this) if (c.contains(element)) isSuccesful = this.remove(element);
-        return isSuccesful;
+        boolean isSuccessful = true;
+        for (Object element : this) if (!c.contains(element)) isSuccessful = this.remove(element);
+        return isSuccessful;
     }
 
+    @Override
     public boolean containsAll(Collection c) {
         for (Object element : c) if (!this.contains(element)) return false;
         return true;
@@ -211,30 +203,32 @@ public class ScapegoatTree<T extends Comparable> implements Set {
 
         node.getSubtreeAsList(saveCurr, subtreeArr);
 
-        int medianInd = (subtreeArr.size() - 1) / 2;
+        int medianInd = (subtreeArr.size() - 1)/2;
 
         if (node == root) {
+            //when the scapegoat is a root, we can not get the parent node
             root = new TreeNode<>(subtreeArr.get(medianInd));
             root.recursiveIns(subtreeArr, 0, medianInd - 1);
             root.recursiveIns(subtreeArr, medianInd + 1, subtreeArr.size() - 1);
-
-        } else {
+        }
+        else {
+            //parent node is the next node in the path we followed
             TreeNode<T> parentNode = path.pop();
 
+            //removal part - if we need to remove an element with no children
             if (subtreeArr.size() == 0 && !saveCurr) {
                 if (node.getValue().compareTo(parentNode.getValue()) <= 0) parentNode.setLeftChild(null);
+                else parentNode.setRightChild(null);
                 return;
             }
-
+            //returning the rebuilt subtree on its place
             TreeNode<T> newScapeGoat = new TreeNode<>(subtreeArr.get(medianInd));
             if (newScapeGoat.getValue().compareTo(parentNode.getValue()) <= 0)
                 parentNode.setLeftChild(newScapeGoat);
-            else parentNode.setRightChild(newScapeGoat);
-            newScapeGoat.recursiveIns(subtreeArr, 0, medianInd - 1);
-            newScapeGoat.recursiveIns(subtreeArr, medianInd + 1, subtreeArr.size() - 1);
+            else
+                parentNode.setRightChild(newScapeGoat);
+            newScapeGoat.recursiveIns(subtreeArr, 0, (medianInd - 1));
+            newScapeGoat.recursiveIns(subtreeArr, (medianInd + 1), subtreeArr.size() - 1);
         }
-
-
     }
-
 }
